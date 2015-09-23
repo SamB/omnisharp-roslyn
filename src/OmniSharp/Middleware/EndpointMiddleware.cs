@@ -43,9 +43,10 @@ namespace OmniSharp.Middleware
                     StringComparer.OrdinalIgnoreCase
                 );
 
-            var updateBufferEndpointHandler = new Lazy<EndpointHandler>(() => _endpointHandlers["/updatebuffer"].Value);
+            var updateBufferEndpointHandler = new Lazy<EndpointHandler<UpdateBufferRequest, object>>(() => (EndpointHandler<UpdateBufferRequest, object>)_endpointHandlers["/updatebuffer"].Value);
             var languagePredicateHandler = new LanguagePredicateHandler(_projectSystems);
-            var projectSystemPredicateHandler = new ProjectSystemPredicateHandler();
+            var projectSystemPredicateHandler = new StaticLanguagePredicateHandler("Projects");
+            var nugetPredicateHandler = new StaticLanguagePredicateHandler("NuGet");
             var endpointHandlers = endpoints.ToDictionary(
                     x => x.EndpointName,
                     endpoint => new Lazy<EndpointHandler>(() =>
@@ -55,6 +56,8 @@ namespace OmniSharp.Middleware
                         // Projects are a special case, this allows us to select the correct "Projects" language for them
                         if (endpoint.EndpointName == "/project" || endpoint.EndpointName == "/projects")
                             handler = projectSystemPredicateHandler;
+                        else if (endpoint.EndpointName == "/packagesearch" || endpoint.EndpointName == "/packagesource" || endpoint.EndpointName == "/packageversion")
+                            handler = nugetPredicateHandler;
                         else
                             handler = languagePredicateHandler;
 
@@ -65,10 +68,10 @@ namespace OmniSharp.Middleware
                         if (endpoint.EndpointName == "/updatebuffer")
                         {
                             // We don't want to call update buffer on update buffer.
-                            updateEndpointHandler = new Lazy<EndpointHandler>(() => null);
+                            updateEndpointHandler = new Lazy<EndpointHandler<UpdateBufferRequest, object>>(() => null);
                         }
 
-                        return new EndpointHandler(handler, _host, _logger, endpoint, updateEndpointHandler, Enumerable.Empty<Plugin>());
+                        return EndpointHandler.Factory(handler, _host, _logger, endpoint, updateEndpointHandler, Enumerable.Empty<Plugin>());
                     }),
                     StringComparer.OrdinalIgnoreCase
                 );

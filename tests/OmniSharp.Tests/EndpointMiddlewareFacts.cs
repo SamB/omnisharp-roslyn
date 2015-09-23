@@ -42,11 +42,29 @@ namespace OmniSharp.Tests
             }
         }
 
-        [OmniSharpHandler(typeof(Func<FindSymbolsRequest, Task<QuickFixResponse>>), LanguageNames.CSharp)]
-        public Func<FindSymbolsRequest, Task<QuickFixResponse>> FindSymbolsDelegate { get; } = (request) => { return Task.FromResult<QuickFixResponse>(null); };
+        [OmniSharpHandler(typeof(RequestHandler<FindSymbolsRequest, QuickFixResponse>), LanguageNames.CSharp)]
+        public class FindSymbolsService : RequestHandler<FindSymbolsRequest, QuickFixResponse>
+        {
+            [Import]
+            public OmnisharpWorkspace Workspace { get; set; }
 
-        [OmniSharpHandler(typeof(Func<UpdateBufferRequest, Task<object>>), LanguageNames.CSharp)]
-        public Func<UpdateBufferRequest, Task<object>> UpdateBuffer { get; } = (request) => { return Task.FromResult<object>(true); };
+            public Task<QuickFixResponse> Handle(FindSymbolsRequest request)
+            {
+                return Task.FromResult<QuickFixResponse>(null);
+            }
+        }
+
+        [OmniSharpHandler(typeof(RequestHandler<UpdateBufferRequest, object>), LanguageNames.CSharp)]
+        public class UpdateBufferService : RequestHandler<UpdateBufferRequest, object>
+        {
+            [Import]
+            public OmnisharpWorkspace Workspace { get; set; }
+
+            public Task<object> Handle(UpdateBufferRequest request)
+            {
+                return Task.FromResult<object>(null);
+            }
+        }
 
         class Response { }
 
